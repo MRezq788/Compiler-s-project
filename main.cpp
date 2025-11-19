@@ -8,6 +8,37 @@ using namespace std;
 
 // g++ main.cpp NFAConstruction.cpp RulesParser.cpp -o generator
 
+vector<char> getAlphabet(State* startState) {
+    set<char> inputs;
+    set<int> visited;
+    queue<State*> q;
+
+    q.push(startState);
+    visited.insert(startState->id);
+
+    // BFS traversal to find all unique transition characters
+    while (!q.empty()) {
+        State* current = q.front();
+        q.pop();
+
+        for (const auto& trans : current->transitions) {
+            // Filter out Epsilon and the internal Backspace char used for concatenation
+            if (trans.input != EPSILON && trans.input != '\x08') {
+                inputs.insert(trans.input);
+            }
+
+            if (visited.find(trans.nextState->id) == visited.end()) {
+                visited.insert(trans.nextState->id);
+                q.push(trans.nextState);
+            }
+        }
+    }
+
+    // Convert set to vector for sorting and printing
+    vector<char> alphabet(inputs.begin(), inputs.end());
+    return alphabet;
+}
+
 int main() {
     cout << "Phase 1: Lexical Generator Front-End" << endl;
 
@@ -20,6 +51,20 @@ int main() {
         cerr << "FATAL ERROR: NFA generation failed. Check 'rules.txt'." << endl;
         return 0;
     }
+
+    cout << "----------------------------------------" << endl;
+    cout << "Accepted Input Characters (Alphabet):" << endl;
+    vector<char> alphabet = getAlphabet(startState);
+    
+    cout << "{ ";
+    for (size_t i = 0; i < alphabet.size(); i++) {
+        cout << alphabet[i];
+        if (i < alphabet.size() - 1) cout << ", ";
+    }
+    cout << " }" << endl;
+    cout << "Total unique characters: " << alphabet.size() << endl;
+    cout << "----------------------------------------" << endl;
+    
 
     cout << "NFA Constructed Successfully!" << endl;
     cout << "Start State ID: " << startState->id << endl;
