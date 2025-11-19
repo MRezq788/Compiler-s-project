@@ -38,7 +38,7 @@ int main() {
         vector<Token> results = NFASimulator::tokenize(startState, input);
         
         for (const auto& t : results) {
-            cout << t.type << " : " << t.value << endl;
+            cout << t.type << endl;
         }
     }
 
