@@ -5,10 +5,11 @@
 #include "NFASimulator.h"
 #include "DFA.h"
 #include "part2.cpp"
+#include "LexicalAnalyzerTester.h"
 
 using namespace std;
 
-// g++ main.cpp NFAConstruction.cpp RulesParser.cpp -o generator
+// g++ main.cpp NFAConstruction.cpp RulesParser.cpp LexicalAnalyzerTester.cpp SymbolTable.cpp LexicalAnalyzer.cpp -o generator
 
 vector<char> getAlphabet(State* startState) {
     set<char> inputs;
@@ -66,6 +67,10 @@ int main() {
     std::cout << "Minimized states: " << md.states.size() << "\n\n";
 
     printTransitionTable(md, alphabet);
+
+    cout<< endl << "Lexical Analyzer Test Output:" << endl;
+    LexicalAnalyzerTester tester = LexicalAnalyzerTester("test.txt", md);
+    tester.run();
     
     // cout << "{ ";
     // for (size_t i = 0; i < alphabet.size(); i++) {
