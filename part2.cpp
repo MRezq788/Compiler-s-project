@@ -146,133 +146,145 @@ struct Partition {
 };
 
 DFA minimizeDFA(const DFA& dfa, const std::vector<char>& alphabet) {
-    // initial partitions: accepting vs non-accepting, but split accepting by tokenClass to preserve priority-based acceptance
+    // Initial partitioning:
+    // - Create one partition for non-accepting states (if any)
+    // - Create one partition per accepting tokenClass (so different token types won't be merged)
     std::vector<Partition> partitions;
-    std::map<std::string, int> accClassToPart;
+    std::map<std::string,int> acceptClassToPart;
 
-    Partition nonAcc;
+    Partition nonAcceptPart;
     for (const DFAState &s : dfa.states) {
-        if (!s.isAccepting)
-            nonAcc.members.insert(s.id);
+        if (!s.isAccepting) nonAcceptPart.members.insert(s.id);
     }
-    if (!nonAcc.members.empty())
-        partitions.push_back(nonAcc);
+    if (!nonAcceptPart.members.empty()) partitions.push_back(nonAcceptPart);
 
     for (const DFAState &s : dfa.states) {
         if (s.isAccepting) {
-            std::string cls = s.tokenClass;
-            if (accClassToPart.find(cls) == accClassToPart.end()) {
+            const std::string &cls = s.tokenClass;
+            auto it = acceptClassToPart.find(cls);
+            if (it == acceptClassToPart.end()) {
                 Partition p;
                 p.members.insert(s.id);
                 int idx = (int)partitions.size();
                 partitions.push_back(p);
-                accClassToPart[cls] = idx;
+                acceptClassToPart[cls] = idx;
             } else {
-                partitions[accClassToPart[cls]].members.insert(s.id);
+                partitions[it->second].members.insert(s.id);
             }
         }
     }
 
-    // Worklist: queue of partition indices to split against
-    std::queue<int> work;
-    for (int i = 0; i < (int)partitions.size(); i++) 
-        work.push(i);
+    // Build state -> partition mapping
+    auto buildStateToPart = [&](const std::vector<Partition>& parts) {
+        std::vector<int> stateToPart(dfa.states.size(), -1);
+        for (size_t pi = 0; pi < parts.size(); ++pi) {
+            for (int s : parts[pi].members) stateToPart[s] = (int)pi;
+        }
+        return stateToPart;
+    };
 
-    while (!work.empty()) {
-        int A_idx = work.front(); 
-        work.pop();
-        
-        // Check if index is still valid
-        if (A_idx >= (int)partitions.size())
-            continue;
-            
-        const Partition A = partitions[A_idx];
+    // Iteratively refine partitions until stable
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        std::vector<Partition> newPartitions;
 
-        for (char c : alphabet) {
-            if (c == EPSILON)
-                continue;
+        // current mapping to speed signature calculation
+        std::vector<int> stateToPart = buildStateToPart(partitions);
 
-            // X is a set of states on input c goes into A
-            std::set<int> X;
-            for (const DFAState &s : dfa.states) {
-                auto it = s.transitions.find(c);
-                if (it != s.transitions.end()) {
-                    int dest = it->second;
-                    if (A.members.count(dest))
-                        X.insert(s.id);
+        // For each existing partition, split it into groups of same transition-signature
+        for (const Partition &part : partitions) {
+            if (part.members.empty()) continue;
+
+            // Map from signature -> set of states
+            // Signature will be a string built from destination partition indices for each alphabet symbol
+            std::map<std::string, std::set<int>> groups;
+
+            for (int s : part.members) {
+                std::ostringstream sig;
+                // For every symbol in alphabet (skip EPSILON)
+                for (char c : alphabet) {
+                    if (c == EPSILON) continue;
+                    auto it = dfa.states[s].transitions.find(c);
+                    if (it == dfa.states[s].transitions.end()) {
+                        sig << "#" << ","; // -1 marker for no transition
+                    } else {
+                        int dest = it->second;
+                        int destPart = (dest >= 0 && dest < (int)stateToPart.size()) ? stateToPart[dest] : -1;
+                        sig << destPart << ",";
+                    }
                 }
+                // Also include whether state itself is accepting and its accept tokenClass
+                // so that states with same transition behavior but different acceptance types/symbols do not merge
+                sig << (dfa.states[s].isAccepting ? "A" : "N") << ",";
+                if (dfa.states[s].isAccepting) sig << dfa.states[s].tokenClass << ",";
+                std::string key = sig.str();
+                groups[key].insert(s);
             }
 
-            if (X.empty())
-                continue;
-
-            // Store new partitions to add after iteration
-            std::vector<Partition> toAdd;
-
-            // For every partition Y, split Y into Y1 = Y (intersection) X and Y2 = Y - X
-            for (int i = 0; i < (int)partitions.size(); ++i) {
-                const auto &Y = partitions[i].members;
-                std::set<int> inter, diff;
-                for (int q : Y) {
-                    if (X.count(q))
-                        inter.insert(q);
-                    else
-                        diff.insert(q);
+            // If partition splits into more than one group, we mark change
+            if (groups.size() == 1) {
+                // unchanged, keep the original partition
+                newPartitions.push_back(part);
+            } else {
+                changed = true;
+                for (auto &entry : groups) {
+                    Partition p;
+                    p.members = std::move(entry.second);
+                    newPartitions.push_back(std::move(p));
                 }
-                if (!inter.empty() && !diff.empty()) {
-                    // Replace partition i with inter, and add diff as new partition
-                    Partition partInter;
-                    partInter.members = inter;
-                    Partition partDiff;
-                    partDiff.members = diff;
-                    partitions[i] = partInter;
-                    toAdd.push_back(partDiff);
-                    
-                    if (partInter.members.size() <= partDiff.members.size())
-                        work.push(i);
-                    else
-                        work.push((int)partitions.size() + (int)toAdd.size() - 1);
-                }
-            }
-            
-            // Add new partitions
-            for (auto &p : toAdd) {
-                partitions.push_back(p);
             }
         }
+
+        partitions.swap(newPartitions);
     }
 
-    // Build mapping from old DFA state -> partition id (new minimized state)
-    std::vector<int> stateToPart(dfa.states.size(), -1);
-    for (int i=0; i < (int)partitions.size(); i++) {
-        for (int s : partitions[i].members)
-            stateToPart[s] = i;
-    }
+    // Build final mapping from old DFA state -> partition id
+    std::vector<int> stateToPart = buildStateToPart(partitions);
 
-    // Build minimized DFA
+    // Construct minimized DFA
     DFA md;
-    md.startState = stateToPart[dfa.startState];
+    md.startState = (dfa.startState >= 0 && dfa.startState < (int)stateToPart.size()) ? stateToPart[dfa.startState] : -1;
     int P = (int)partitions.size();
     md.states.resize(P);
-    for (int i=0; i < P; i++) {
-        md.states[i].id = i;
-        // choose representative old DFA state to copy info
-        int rep = *partitions[i].members.begin();
+
+    for (int p = 0; p < P; ++p) {
+        md.states[p].id = p;
+        // pick a representative: choose the accepting state with smallest priority if any, otherwise any state
+        int rep = *partitions[p].members.begin();
+        // prefer an accepting state with smallest priority
+        int bestRep = rep;
+        int bestPriority = INT_MAX;
+        for (int s : partitions[p].members) {
+            if (dfa.states[s].isAccepting) {
+                if (dfa.states[s].priority < bestPriority) {
+                    bestPriority = dfa.states[s].priority;
+                    bestRep = s;
+                }
+            } else if (bestPriority == INT_MAX) {
+                // pick a non-accepting candidate only if no accepting chosen yet
+                bestRep = s;
+            }
+        }
+        rep = bestRep;
+
         const DFAState &repOld = dfa.states[rep];
-        md.states[i].isAccepting = repOld.isAccepting;
-        md.states[i].tokenClass = repOld.tokenClass;
-        md.states[i].priority = repOld.priority;
+        md.states[p].isAccepting = repOld.isAccepting;
+        md.states[p].tokenClass = repOld.tokenClass;
+        md.states[p].priority = repOld.priority;
     }
 
-    // Fill transitions for minimized states using representative states, and remap destinations to partition ids
+    // Fill transitions for minimized states: use any member's transitions and remap destinations via stateToPart
     for (int p = 0; p < P; ++p) {
+        // choose a representative state from the partition to copy transitions
         int rep = *partitions[p].members.begin();
         const DFAState &repOld = dfa.states[rep];
         for (auto &tr : repOld.transitions) {
             char c = tr.first;
+            if (c == EPSILON) continue;
             int destOld = tr.second;
-            int destPart = stateToPart[destOld];
-            md.states[p].transitions[c] = destPart;
+            int destPart = (destOld >= 0 && destOld < (int)stateToPart.size()) ? stateToPart[destOld] : -1;
+            if (destPart >= 0) md.states[p].transitions[c] = destPart;
         }
     }
 
