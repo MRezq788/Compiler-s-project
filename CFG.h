@@ -21,5 +21,6 @@ Grammar readGrammar(const std::string& filename);
 // FIRST sets
 extern std::map<std::string, std::set<std::string>> FIRST;
 void computeFirst(Grammar& grammar);
+void printFirst();
 
 #endif

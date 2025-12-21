@@ -205,11 +205,11 @@ void printFirst() {
     }
 }
 
-int main() {
-    Grammar grammar = readGrammar("grammar.txt");
+// int main() {
+//     Grammar grammar = readGrammar("grammar.txt");
 
-    computeFirst(grammar);
-    printFirst();
+//     computeFirst(grammar);
+//     printFirst();
 
-    return 0;
-}
+//     return 0;
+// }
