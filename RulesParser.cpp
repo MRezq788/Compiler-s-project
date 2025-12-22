@@ -115,7 +115,14 @@ State* RulesParser::parseFile(std::string filename) {
             
             if (nfa) {
                 nfa->end->isAccepting = true;
-                nfa->end->tokenClass = lhs;
+                
+                if (lhs == "assign") {
+                    nfa->end->tokenClass = "=";
+                } 
+                else {
+                    nfa->end->tokenClass = lhs;
+                }
+                
                 nfa->end->priority = priorityCounter++;
                 tokenNFAs.push_back(nfa);
                 std::cout << "   Parsed Token: " << lhs << std::endl;
