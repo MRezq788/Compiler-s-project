@@ -13,11 +13,16 @@ public:
     Grammar eliminateLeftRecursion(const Grammar& g);
 
     // Appliy left factoring to the given grammar
-    // Grammar leftFactor(const Grammar& g);
+    Grammar leftFactor(const Grammar& g);
 private: 
     void eliminateImmediateLeftRecursion( 
         const std::string& nonTerminal, 
         std::vector<std::vector<std::string>>& rules, Grammar& result 
+    );
+    void leftFactorProduction(
+        const std::string& A, 
+        const std::vector<std::vector<std::string>>& alternatives, 
+        Grammar& result
     );
 };
 
