@@ -65,8 +65,12 @@ void Parser::parse() {
     while (!parseStack.empty()) {
         string top = parseStack.top();
 
+        if (!lexer.hasNext() && currentToken.type != "EOF") {
+            currentToken = {"EOF", ""};
+        }
+
         if (top == END_MARKER) {
-            if (currentToken.type == "EOF" || currentToken.value == "" || currentToken.type == "ERROR") {
+            if (currentToken.type == "EOF" || currentToken.value == "" || currentToken.type == "ERROR" || currentToken.value.empty()) {
                 cout << "SUCCESS: Parsing complete. Output saved.\n";
                 break;
             } else {
