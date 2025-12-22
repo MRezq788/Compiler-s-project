@@ -38,7 +38,7 @@ void GrammarTransformer::eliminateImmediateLeftRecursion(
         result.productions[A_dash].push_back(a);
     }
 
-    result.productions[A_dash].push_back({EPSILON});
+    result.productions[A_dash].push_back({EPSILON_SYMBOL});
 }
 
 Grammar GrammarTransformer::eliminateLeftRecursion(const Grammar& g) {
@@ -84,7 +84,7 @@ void GrammarTransformer::leftFactorProduction(const std::string& A, const std::v
     bool factored = false;
 
     for (const auto& [prefix, group] : prefixGroups) {
-        if (group.size() == 1 || prefix == EPSILON) {
+        if (group.size() == 1 || prefix == EPSILON_SYMBOL) {
             result.productions[A].push_back(group[0]);
             continue;
         }
@@ -114,7 +114,7 @@ void GrammarTransformer::leftFactorProduction(const std::string& A, const std::v
         std::vector<std::vector<std::string>> A_dashNewRules;
         for (const auto& alt : group) {
             std::vector<std::string> suffix(alt.begin() + commonPrefix.size(), alt.end());
-            if (suffix.empty()) suffix.push_back(EPSILON);
+            if (suffix.empty()) suffix.push_back(EPSILON_SYMBOL);
             A_dashNewRules.push_back(suffix);
         }
 
