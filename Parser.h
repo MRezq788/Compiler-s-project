@@ -27,6 +27,7 @@ private:
     
     // Helper to update the sentential form string
     void updateDerivation(const std::string& lhs, const std::vector<std::string>& rhs);
+    void recover(const std::string& top, Token& currentToken, bool isNonTerminal);
 };
 
 #endif

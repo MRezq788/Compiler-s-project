@@ -95,9 +95,7 @@ void Parser::parse() {
                     parseStack.pop();
                 }
             } else {
-                cerr << "SYNTAX ERROR: Expected '" << top << "' but found '" << currentToken.type << "'\n";
-                outFile << "ERROR: Syntax Error at " << currentToken.value << endl;
-                return;
+                recover(top, currentToken, false);
             }
         }
         else {
@@ -111,17 +109,42 @@ void Parser::parse() {
                 
                 updateDerivation(top, production);
                 printDerivation();
-                
+
                 if (!(production.size() == 1 && production[0] == EPSILON_SYMBOL)) {
                     for (int i = production.size() - 1; i >= 0; --i) {
                         parseStack.push(production[i]);
                     }
                 }
             } else {
-                cerr << "SYNTAX ERROR: No rule for [" << top << ", " << currentToken.type << "]\n";
-                outFile << "ERROR: No rule for " << top << " with token " << currentToken.type << endl;
-                return;
+                recover(top, currentToken, true);
             }
         }
+    }
+}
+
+void Parser::recover(const std::string& top, Token& currentToken, bool isNonTerminal) {
+    outFile << "ERROR: Syntax Error at " << currentToken.value << std::endl;
+    if (isNonTerminal) {
+        cerr << "SYNTAX ERROR: No rule for [" << top << ", " << currentToken.type << "] - Recovering..." << std::endl;
+    } else {
+        cerr << "SYNTAX ERROR: Expected '" << top << "' but found '" << currentToken.type << "' - Recovering..." << std::endl;
+    }
+
+    // Panic-mode: Skip input tokens until one in FOLLOW(top) or EOF
+    while (lexer.hasNext()) {
+        if (currentToken.type == "EOF") {
+            break;
+        }
+        if (FOLLOW[top].count(currentToken.type)) {
+            parseStack.pop();
+            break;
+        }
+        
+        cerr << "Skipping invalid token: " << currentToken.type << std::endl;
+        currentToken = lexer.getNextToken();
+    }
+
+    if (!parseStack.empty() && parseStack.top() == top) {
+        parseStack.pop();
     }
 }
