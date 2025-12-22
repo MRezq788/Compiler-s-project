@@ -52,6 +52,33 @@ vector<char> getAlphabet(State* startState) {
     return alphabet;
 }
 
+
+void printGrammar(const Grammar& g) {
+    std::cout << "Start Symbol: " << g.startSymbol << "\n";
+
+    std::cout << "Non-terminals: ";
+    for (const auto& nt : g.nonTerminals)
+        std::cout << nt << " ";
+    std::cout << "\n";
+
+    std::cout << "Terminals: ";
+    for (const auto& t : g.terminals)
+        std::cout << t << " ";
+    std::cout << "\n";
+
+    std::cout << "Productions:\n";
+    for (const auto& p : g.productions) {
+        std::cout << "  " << p.first << " -> ";
+        for (size_t i = 0; i < p.second.size(); i++) {
+            for (const auto& sym : p.second[i])
+                std::cout << sym << " ";
+            if (i + 1 < p.second.size())
+                std::cout << "| ";
+        }
+        std::cout << "\n";
+    }
+}
+
 int main() {
     // ==========================================
     // PHASE 1: LEXICAL ANALYZER GENERATION
@@ -94,6 +121,8 @@ int main() {
 
     cout << "Reading Grammar..." << endl;
     Grammar grammar = readGrammar("grammar.txt");
+    printGrammar(grammar);
+
     if (grammar.productions.empty()) {
         cerr << "FATAL ERROR: Grammar is empty. Check 'grammar.txt'." << endl;
         return 0;

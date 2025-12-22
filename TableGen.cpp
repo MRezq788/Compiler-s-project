@@ -186,15 +186,15 @@ void printParsingTable(const ParsingTable& table) {
     }
 }
 
-int main() {
-    Grammar grammar = readGrammar("grammar.txt");
-    computeFirst(grammar);
-    computeFollow(grammar);
-    printFirst();
-    printFollow();
+// int main() {
+//     Grammar grammar = readGrammar("grammar.txt");
+//     computeFirst(grammar);
+//     computeFollow(grammar);
+//     printFirst();
+//     printFollow();
 
-    ParsingTable parsingTable = buildParsingTable(grammar);
-    printParsingTable(parsingTable);
+//     ParsingTable parsingTable = buildParsingTable(grammar);
+//     printParsingTable(parsingTable);
 
-    return 0;
-}
+//     return 0;
+// }
