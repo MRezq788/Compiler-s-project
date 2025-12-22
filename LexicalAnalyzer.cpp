@@ -21,6 +21,7 @@ LexicalAnalyzer::LexicalAnalyzer(const std::string& filePath, const DFA& dfa)
     buffer << input.rdbuf();
     inputString = buffer.str();
     rtrim(inputString);
+    inputString += '\n';
 }
 
 
