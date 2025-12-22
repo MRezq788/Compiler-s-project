@@ -15,6 +15,7 @@
 // Phase 2 Headers 
 #include "TableGen.h" 
 #include "Parser.h"
+#include "GrammarTransformer.h"
 
 using namespace std;
 
@@ -120,7 +121,10 @@ int main() {
     cout << "\n\n=== Phase 2: Parser Generator ===" << endl;
 
     cout << "Reading Grammar..." << endl;
-    Grammar grammar = readGrammar("grammar.txt");
+    Grammar originalGrammar = readGrammar("grammar.txt");
+    GrammarTransformer transformer;
+    Grammar grammarWithNoLR = transformer.eliminateLeftRecursion(originalGrammar);
+    Grammar grammar = transformer.leftFactor(grammarWithNoLR);
     printGrammar(grammar);
 
     if (grammar.productions.empty()) {
