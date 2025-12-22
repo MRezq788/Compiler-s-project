@@ -6,7 +6,7 @@
 #include <map>
 #include <set>
 
-const std::string EPSILON = "\\L";
+const std::string EPSILON_SYMBOL = "\\L";
 
 struct Grammar {
     std::string startSymbol;

@@ -18,7 +18,7 @@ set<string> getFirstOfSequence(const vector<string>& sequence) {
     bool allNullable = true;
 
     for (const string& sym : sequence) {
-        if (sym == EPSILON) {
+        if (sym == EPSILON_SYMBOL) {
             continue; 
         }
 
@@ -28,9 +28,9 @@ set<string> getFirstOfSequence(const vector<string>& sequence) {
             // Based on Member 1's code, terminals are in FIRST map too.
             if (FIRST.count(sym)) {
                 for(const string& f : FIRST[sym]) {
-                    if(f != EPSILON) result.insert(f);
+                    if(f != EPSILON_SYMBOL) result.insert(f);
                 }
-                if(FIRST[sym].count(EPSILON) == 0) {
+                if(FIRST[sym].count(EPSILON_SYMBOL) == 0) {
                     allNullable = false;
                     break;
                 }
@@ -45,13 +45,13 @@ set<string> getFirstOfSequence(const vector<string>& sequence) {
             // It's a non-terminal
             const set<string>& firstSet = FIRST[sym];
             for (const string& val : firstSet) {
-                if (val != EPSILON) {
+                if (val != EPSILON_SYMBOL) {
                     result.insert(val);
                 }
             }
 
-            // If this symbol doesn't produce Epsilon, we stop looking ahead
-            if (firstSet.find(EPSILON) == firstSet.end()) {
+            // If this symbol doesn't produce EPSILON_SYMBOL, we stop looking ahead
+            if (firstSet.find(EPSILON_SYMBOL) == firstSet.end()) {
                 allNullable = false;
                 break;
             }
@@ -59,7 +59,7 @@ set<string> getFirstOfSequence(const vector<string>& sequence) {
     }
 
     if (allNullable) {
-        result.insert(EPSILON);
+        result.insert(EPSILON_SYMBOL);
     }
     return result;
 }
@@ -98,24 +98,24 @@ void computeFollow(Grammar& grammar) {
                             beta.assign(rhs.begin() + i + 1, rhs.end());
                         }
 
-                        // Rule 2: FOLLOW(B) += FIRST(beta) - {epsilon}
+                        // Rule 2: FOLLOW(B) += FIRST(beta) - {EPSILON_SYMBOL}
                         set<string> firstOfBeta = getFirstOfSequence(beta);
                         
-                        // Logic: If beta is empty, firstOfBeta contains EPSILON by default logic 
-                        // or is just empty if we treat empty vec as epsilon. 
-                        // Actually getFirstOfSequence returns EPSILON for empty input.
+                        // Logic: If beta is empty, firstOfBeta contains EPSILON_SYMBOL by default logic 
+                        // or is just empty if we treat empty vec as EPSILON_SYMBOL. 
+                        // Actually getFirstOfSequence returns EPSILON_SYMBOL for empty input.
 
                         for (const string& f : firstOfBeta) {
-                            if (f != EPSILON) {
+                            if (f != EPSILON_SYMBOL) {
                                 if (FOLLOW[B].insert(f).second) {
                                     changed = true;
                                 }
                             }
                         }
 
-                        // Rule 3: If epsilon is in FIRST(beta) OR beta is empty,
+                        // Rule 3: If EPSILON_SYMBOL is in FIRST(beta) OR beta is empty,
                         // then FOLLOW(B) += FOLLOW(A)
-                        if (firstOfBeta.find(EPSILON) != firstOfBeta.end()) {
+                        if (firstOfBeta.find(EPSILON_SYMBOL) != firstOfBeta.end()) {
                             for (const string& f : FOLLOW[A]) {
                                 if (FOLLOW[B].insert(f).second) {
                                     changed = true;
@@ -141,21 +141,23 @@ ParsingTable buildParsingTable(Grammar& grammar) {
 
             // For each terminal 'a' in FIRST(alpha), add A->alpha to Table[A, a]
             for (const string& a : firstAlpha) {
-                if (a != EPSILON) {
+                if (a != EPSILON_SYMBOL) {
                     if (table.count({A, a})) {
                         cerr << "ERROR: Grammar is NOT LL(1). Conflict at [" << A << ", " << a << "]" << endl;
+                        exit(1);
                     }
                     table[{A, a}] = rhs;
                 }
             }
 
-            // 3. If EPSILON is in FIRST(alpha), add A->alpha to Table[A, b] for each b in FOLLOW(A)
-            if (firstAlpha.find(EPSILON) != firstAlpha.end()) {
+            // 3. If EPSILON_SYMBOL is in FIRST(alpha), add A->alpha to Table[A, b] for each b in FOLLOW(A)
+            if (firstAlpha.find(EPSILON_SYMBOL) != firstAlpha.end()) {
                 for (const string& b : FOLLOW[A]) {
                     if (table.count({A, b})) {
                         cerr << "ERROR: Grammar is NOT LL(1). Conflict at [" << A << ", " << b << "]" << endl;
+                        exit(1);
                     }
-                    // For table entry, we store the production that derived Epsilon.
+                    // For table entry, we store the production that derived EPSILON_SYMBOL.
                     // If A -> \L, rhs is {\L}. If A -> X Y and X,Y -> \L, rhs is {X, Y}.
                     table[{A, b}] = rhs;
                 }
@@ -186,15 +188,15 @@ void printParsingTable(const ParsingTable& table) {
     }
 }
 
-int main() {
-    Grammar grammar = readGrammar("grammar.txt");
-    computeFirst(grammar);
-    computeFollow(grammar);
-    printFirst();
-    printFollow();
+// int main() {
+//     Grammar grammar = readGrammar("grammar.txt");
+//     computeFirst(grammar);
+//     computeFollow(grammar);
+//     printFirst();
+//     printFollow();
 
-    ParsingTable parsingTable = buildParsingTable(grammar);
-    printParsingTable(parsingTable);
+//     ParsingTable parsingTable = buildParsingTable(grammar);
+//     printParsingTable(parsingTable);
 
-    return 0;
-}
+//     return 0;
+// }

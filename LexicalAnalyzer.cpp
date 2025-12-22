@@ -21,6 +21,7 @@ LexicalAnalyzer::LexicalAnalyzer(const std::string& filePath, const DFA& dfa)
     buffer << input.rdbuf();
     inputString = buffer.str();
     rtrim(inputString);
+    inputString += '\n';
 }
 
 
@@ -30,6 +31,10 @@ bool LexicalAnalyzer::hasNext() const {
 
 
 Token LexicalAnalyzer::getNextToken() {
+    if (pos >= inputString.size()) {
+        return {"$", ""}; 
+    }
+
     int currentState = dfa.startState;
     int lastAcceptingState = -1;
     size_t lastAcceptingIndex = pos;
@@ -41,6 +46,7 @@ Token LexicalAnalyzer::getNextToken() {
         char c = inputString[i];
         if (isspace(c) && lexeme.empty()) {
             i++;
+            pos++;
             continue;
         }
 
@@ -74,9 +80,14 @@ Token LexicalAnalyzer::getNextToken() {
 
     // Panic mode: no accepting state reached
     errorOccurred = true;
+
+    if (pos >= inputString.size()) {
+         return {"$", ""};
+    }
+
     handleLexicalError(inputString[pos]);
     pos++; // skip bad character
-    return {"ERROR", ""};
+    return getNextToken();
 }
 
 

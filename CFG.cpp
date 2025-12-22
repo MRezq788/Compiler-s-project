@@ -96,9 +96,9 @@ Grammar readGrammar(const std::string& filename) {
                 std::string sym;
 
                 while (ss >> sym) {
-                    if (sym == EPSILON) {
+                    if (sym == EPSILON_SYMBOL) {
                         // Keep \L as a symbol in RHS; no need to add to terminals
-                        symbols.push_back(EPSILON);
+                        symbols.push_back(EPSILON_SYMBOL);
                     } 
                     else if (sym.front() == '\'' && sym.back() == '\'') {
                         std::string terminal = sym.substr(1, sym.size() - 2);
@@ -157,37 +157,37 @@ void computeFirst(Grammar& grammar) {
             const std::string& A = prod.first;
 
             for (const auto& rhs : prod.second) {
-                bool allNullable = true; // tracks if all symbols in RHS can produce epsilon
+                bool allNullable = true; // tracks if all symbols in RHS can produce EPSILON_SYMBOL
 
                 for (size_t i = 0; i < rhs.size(); ++i) {
                     const std::string& Y = rhs[i];
 
-                    if (Y == EPSILON) {
-                        // RHS is epsilon itself
-                        if (FIRST[A].insert(EPSILON).second)
+                    if (Y == EPSILON_SYMBOL) {
+                        // RHS is EPSILON_SYMBOL itself
+                        if (FIRST[A].insert(EPSILON_SYMBOL).second)
                             changed = true;
                         allNullable = true;
                         break; // nothing else to check
                     }
 
-                    // Add FIRST(Y) \ {epsilon} to FIRST(A)
+                    // Add FIRST(Y) \ {EPSILON_SYMBOL} to FIRST(A)
                     for (const auto& terminal : FIRST[Y]) {
-                        if (terminal != EPSILON) {
+                        if (terminal != EPSILON_SYMBOL) {
                             if (FIRST[A].insert(terminal).second)
                                 changed = true;
                         }
                     }
 
-                    // If Y cannot produce epsilon, stop here
-                    if (FIRST[Y].find(EPSILON) == FIRST[Y].end()) {
+                    // If Y cannot produce EPSILON_SYMBOL, stop here
+                    if (FIRST[Y].find(EPSILON_SYMBOL) == FIRST[Y].end()) {
                         allNullable = false;
                         break;
                     }
                 }
 
-                // If all symbols can produce epsilon, add epsilon to FIRST(A)
+                // If all symbols can produce EPSILON_SYMBOL, add EPSILON_SYMBOL to FIRST(A)
                 if (allNullable) {
-                    if (FIRST[A].insert(EPSILON).second)
+                    if (FIRST[A].insert(EPSILON_SYMBOL).second)
                         changed = true;
                 }
             }
