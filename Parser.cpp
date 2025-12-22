@@ -70,8 +70,12 @@ void Parser::parse() {
                 cout << "SUCCESS: Parsing complete. Output saved.\n";
                 break;
             } else {
-                cerr << "ERROR: Stack empty but input remains: " << currentToken.value << endl;
-                return;
+                cerr << "WARNING: Extra input after parse complete: " << currentToken.value << ". Skipping remaining input." << std::endl;
+                while (lexer.hasNext()) {
+                    currentToken = lexer.getNextToken();
+                }
+                cout << "SUCCESS: Parsing complete with extra input skipped." << std::endl;
+                break;
             }
         }
 
