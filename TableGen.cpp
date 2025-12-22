@@ -144,6 +144,7 @@ ParsingTable buildParsingTable(Grammar& grammar) {
                 if (a != EPSILON_SYMBOL) {
                     if (table.count({A, a})) {
                         cerr << "ERROR: Grammar is NOT LL(1). Conflict at [" << A << ", " << a << "]" << endl;
+                        exit(1);
                     }
                     table[{A, a}] = rhs;
                 }
@@ -154,6 +155,7 @@ ParsingTable buildParsingTable(Grammar& grammar) {
                 for (const string& b : FOLLOW[A]) {
                     if (table.count({A, b})) {
                         cerr << "ERROR: Grammar is NOT LL(1). Conflict at [" << A << ", " << b << "]" << endl;
+                        exit(1);
                     }
                     // For table entry, we store the production that derived EPSILON_SYMBOL.
                     // If A -> \L, rhs is {\L}. If A -> X Y and X,Y -> \L, rhs is {X, Y}.
