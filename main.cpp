@@ -20,7 +20,7 @@
 using namespace std;
 
 // Compile Command:
-// g++ main.cpp NFAConstruction.cpp RulesParser.cpp LexicalAnalyzerTester.cpp SymbolTable.cpp LexicalAnalyzer.cpp CFG.cpp TableGen.cpp Parser.cpp -o compiler
+// g++ main.cpp NFAConstruction.cpp RulesParser.cpp LexicalAnalyzerTester.cpp SymbolTable.cpp LexicalAnalyzer.cpp CFG.cpp TableGen.cpp Parser.cpp GrammarTransformer.cpp -o compiler
 
 vector<char> getAlphabet(State* startState) {
     set<char> inputs;
