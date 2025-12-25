@@ -53,12 +53,13 @@ void Parser::updateDerivation(const std::string& lhs, const std::vector<std::str
         }
     }
 }
-
 void Parser::parse() {
-    cout << "\n--- STARTING PARSE ---\n";
+    cout << "\n--- STARTING PARSE ---\n\n";
     
     // Print the initial Start Symbol to file
     printDerivation();
+
+    cout << "--- STACK ACTIONS START ---" << endl;
 
     Token currentToken = lexer.getNextToken();
 
@@ -96,9 +97,12 @@ void Parser::parse() {
             // --- MATCH TERMINAL ---
             if (top == currentToken.type || top == EPSILON_SYMBOL) {
                 if (top != EPSILON_SYMBOL) {
+                    // [ADD THIS LINE] Print the match action
+                    cout << "match " << top << endl; 
+
                     parseStack.pop();
                     if (lexer.hasNext()) currentToken = lexer.getNextToken();
-                    else currentToken = { "EOF", "" };
+                    else currentToken = { "$", "" }; // Use "$" instead of "EOF" for consistency
                 } else {
                     parseStack.pop();
                 }
@@ -112,6 +116,14 @@ void Parser::parse() {
             
             if (table.find(key) != table.end()) {
                 vector<string> production = table[key];
+
+                // [ADD THIS BLOCK] Print the production rule used
+                cout << "output " << top << " -> ";
+                for (size_t k = 0; k < production.size(); ++k) {
+                    cout << production[k] << (k < production.size()-1 ? " " : "");
+                }
+                cout << endl;
+                // -----------------------------------------------------
 
                 parseStack.pop(); 
                 
